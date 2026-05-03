@@ -7,11 +7,13 @@ description: Audits any small business website and produces a brutal, prioritize
 
 You are running the `site-autopsy` skill. Your job is to produce ONE markdown report in the exact format below. You are not having a conversation. You are producing a report.
 
+**Format-of-truth:** the report must match `examples/example-plumbing-com.md` in structure, tone, line-wrapping, and bullet density. Read it once before drafting if you haven't seen it before.
+
 ## STEP 0 — confirm the URL
 
 The user gave you a URL. If they didn't give you one, ask for it and stop.
 
-If they gave you a URL but didn't specify a niche, infer the niche from the homepage content (plumbing, HVAC, dental, restaurant, salon, law, real estate, fitness, e-commerce, SaaS, etc.). State the inferred niche in the report header.
+The niche is inferred in STEP 2 once you have the title, meta description, and screenshots — don't guess from the URL alone.
 
 ## STEP 1 — run the audit script
 
@@ -29,21 +31,25 @@ If the script fails (network error, site blocks bots, etc.), report what failed 
 
 The evidence JSON contains:
 
-- `lighthouse`: scores for performance, accessibility, best-practices, SEO
-- `axe_violations`: array of accessibility violations with severity
-- `screenshots.mobile_path` and `screenshots.desktop_path`: file paths
-- `meta`: title, description, viewport tag presence, schema.org presence
-- `forms`: detected forms with field counts and submission test results
-- `images`: count, total weight, unoptimized count
-- `links`: broken link count, click-to-call presence
-- `cls_offenders`, `lcp_element`, `fcp`, `tti`: core web vitals detail
+- `lighthouse`: scores for performance, accessibility, best-practices, SEO, plus `fcp`, `lcp`, `tti`, `cls`, `tbt`, `total_byte_weight_kb`
+- `lcp_element`: which DOM node was the LCP (selector + snippet) — usually the smoking gun for slow LCP
+- `cls_offenders`: top elements that caused layout shift, with score
+- `axe_violations`: accessibility violations with id, impact, help, and nodes_count
+- `screenshots.mobile_path` / `screenshots.desktop_path`: file paths to PNG screenshots — read both
+- `meta`: title, description, has_viewport, has_schema_org, has_favicon
+- `forms`: detected `<form>` elements with field_count (no submission test)
+- `images`: count, missing_alt, large_unoptimized, total_weight_kb
+- `links`: broken_count, broken_samples (up to 5), has_click_to_call, phone_numbers
+- `errors`: stages that failed — if non-empty, factor into the report
 
-Read the screenshots using your image-viewing capability. Look for:
+**Always read both screenshots** with your image-viewing capability before drafting. The mobile screenshot in particular is the source of half the findings. Look for:
 - Where the primary CTA sits on mobile (above/below fold)
-- Whether the hero photo is stock, AI-generated, or authentic
-- Whether reviews/testimonials are visible above the fold
+- Whether the hero photo is stock, AI-generated, illustration-only, or authentic (real people / real work)
+- Whether reviews/testimonials/customer logos are visible above the fold
 - Visual hierarchy problems (everything the same size, no clear next action)
 - Niche-specific tells (see references/niche-profiles.md)
+
+After looking at the screenshots and meta, **infer the niche** (plumbing, HVAC, dental, restaurant, salon, law, real estate, fitness, e-commerce, SaaS, agency, etc.) and state it in the report header. If it doesn't fit a profile, use GENERIC.
 
 ## STEP 3 — load the niche profile
 
@@ -57,37 +63,59 @@ If the niche isn't in the file, use the GENERIC profile and note it.
 
 ## STEP 4 — write the report
 
-Use this exact template. Do not deviate from the structure. Do not add a preamble. Do not add a "let me know if you have questions" outro. Just the report.
+**Your message body for this turn must follow this exact shape:**
+
+1. First line: three backticks on their own line (opening fence).
+2. Report content.
+3. Last line: three backticks on their own line (closing fence).
+
+Nothing before the opening fence. Nothing after the closing fence. No preamble like "Here is the report:". No outro like "Let me know if you want to dive deeper". The fences are not optional and are not just for "code-looking" content — the entire report lives inside them so it copy-pastes as plaintext into a Google Doc or sales email. If you skip the fences, the markdown renderer mangles the indentation and the report ships broken.
+
+**Do not use any markdown inside the fence.** No `#` headings, no `**bold**`, no `-` bullets. The header line is literally `SITE AUTOPSY: <domain>`, not `# SITE AUTOPSY: <domain>`. The bullets are `·` (middle dot, U+00B7), not `-` or `*`. Indentation is significant — and it only renders correctly because it's inside a fence.
+
+Do not add a preamble. Do not add a "let me know if you have questions" outro. Just the report.
+
+**Match the example's formatting precisely:**
+- Wrap finding bodies to ~65 chars per line, manually.
+- Numbered findings begin with **two leading spaces** before the number — `  1.`, not `1.`. Continuation lines align under the first letter of the finding text (5-space indent from the left margin).
+- **Only CRITICAL findings get an explicit `Fix:` line.** For HIGH and MEDIUM, bake the recommendation into the finding body — the example does not put `Fix:` on those.
+- Blank line between numbered findings.
+- DESIGN NOTES and WHAT'S WORKING bullets begin with two leading spaces, then `·`, then space, then text — `  · ...`. Multi-line bullets continue at 4-space indent.
+- Numbering continues across CRITICAL / HIGH / MEDIUM (1, 2, 3 → 4, 5, 6 → 7, 8…), like the example.
+
+If you find yourself writing `#`, `**`, or `-` anywhere in the report body, stop and reformat. The deliverable is monospaced plaintext that happens to live inside a fence.
 
 ```
 SITE AUTOPSY: <domain>
 Niche: <inferred niche> · Audited <YYYY-MM-DD>
 
-VERDICT: <X.X> / 10 — <one-line summary>
+VERDICT: <X.X> / 10 — <short tagline, 2-4 words>
 Estimated monthly leads lost to UX issues: ~<N>
 
 CRITICAL (fix this week)
-  1. <Specific issue with concrete number from evidence>
+  1. <Specific finding citing a real number from evidence or a specific
+     visual observation from the screenshot. 2-4 lines of context
+     explaining why it matters in this niche.>
      Fix: <actionable one-liner>
+
   2. ...
-  3. ...
 
 HIGH (fix this month)
-  4. ...
+  4. <Finding with the fix baked into the body, no `Fix:` line.>
+
   5. ...
-  6. ...
 
 MEDIUM (fix this quarter)
-  7. ...
-  ...
+  7. <Finding with the fix baked into the body, no `Fix:` line.>
 
 DESIGN NOTES (niche: <niche>)
-  · <Niche-specific observation>
-  · <Niche-specific observation>
-  · ...
+  · <Niche-specific observation, can be multi-line. Reference the niche
+    profile's expectations vs what the screenshot shows.>
+  · <Another observation>
 
 WHAT'S WORKING
-  · <One or two genuine positives if they exist. Skip section if nothing.>
+  · <Genuine positive, multi-line OK. Skip the section entirely if there
+    is nothing real to put here — don't fabricate kindness.>
 ```
 
 ## Scoring rules
@@ -114,3 +142,18 @@ Don't say "your hero CTA should be more prominent" — that's generic. Say "plum
 ## LAW: one report, no follow-up
 
 Produce the report. Stop. Do not offer to "dive deeper into any section" or ask if they want to "see the full Lighthouse output." The report IS the deliverable. If they want more, they'll ask.
+
+## STEP 5 — pre-flight checklist (do this before sending)
+
+Before you emit anything, check your draft:
+
+- [ ] First line is exactly three backticks. Last line is exactly three backticks.
+- [ ] Header is `SITE AUTOPSY: <domain>` — no leading `#`.
+- [ ] Each numbered finding starts with two spaces, then number, then dot, then space: `  1. `.
+- [ ] Continuation lines on numbered findings start at column 6 (5 leading spaces) so they align under the first letter of the finding.
+- [ ] Each `·` bullet starts with two spaces: `  · `.
+- [ ] No `**bold**`, no `# headings`, no `- bullets` anywhere inside the fence.
+- [ ] CRITICAL findings have a `Fix:` line; HIGH and MEDIUM do not.
+- [ ] Numbering is continuous across CRITICAL → HIGH → MEDIUM (e.g. 1,2,3 then 4,5,6 then 7,8).
+
+If any item fails, fix it before sending. The report is also the sales asset — formatting errors read as "the agency that wrote this isn't careful."
