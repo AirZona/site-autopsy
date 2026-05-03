@@ -5,9 +5,9 @@ description: Audits any small business website and produces a brutal, prioritize
 
 # site-autopsy
 
-You are running the `site-autopsy` skill. Your job is to produce ONE markdown report in the exact format below. You are not having a conversation. You are producing a report.
+You are running the `site-autopsy` skill. Your job is to deliver ONE plaintext audit report. You are not having a conversation.
 
-**Format-of-truth:** the report must match `examples/example-plumbing-com.md` in structure, tone, line-wrapping, and bullet density. Read it once before drafting if you haven't seen it before.
+The flow is: run `audit.js` → read evidence + screenshots → write `findings.json` (structured content) → run `render.js` to format → paste the rendered output as your reply. The rendering step owns all formatting; you only own the content.
 
 ## STEP 0 — confirm the URL
 
@@ -61,67 +61,55 @@ Find the section for the inferred niche. It tells you what buyers in that niche 
 
 If the niche isn't in the file, use the GENERIC profile and note it.
 
-## STEP 4 — write the report
+## STEP 4 — write `findings.json`
 
-**Your message body for this turn must follow this exact shape:**
+You produce **structured content**, not a formatted report. The renderer in STEP 5 owns every formatting decision (fence, indent, wrap, numbering). You don't have to think about any of that.
 
-1. First line: three backticks on their own line (opening fence).
-2. Report content.
-3. Last line: three backticks on their own line (closing fence).
+Write a file named `findings.json` next to the evidence — at `~/.local/share/site-autopsy/<domain>/findings.json` — with this exact shape:
 
-Nothing before the opening fence. Nothing after the closing fence. No preamble like "Here is the report:". No outro like "Let me know if you want to dive deeper". The fences are not optional and are not just for "code-looking" content — the entire report lives inside them so it copy-pastes as plaintext into a Google Doc or sales email. If you skip the fences, the markdown renderer mangles the indentation and the report ships broken.
-
-**Do not use any markdown inside the fence.** No `#` headings, no `**bold**`, no `-` bullets. The header line is literally `SITE AUTOPSY: <domain>`, not `# SITE AUTOPSY: <domain>`. The bullets are `·` (middle dot, U+00B7), not `-` or `*`. Indentation is significant — and it only renders correctly because it's inside a fence.
-
-Do not add a preamble. Do not add a "let me know if you have questions" outro. Just the report.
-
-**Match the example's formatting precisely:**
-- Wrap finding bodies to ~65 chars per line, manually.
-- Numbered findings begin with **two leading spaces** before the number — `  1.`, not `1.`. Continuation lines align under the first letter of the finding text (5-space indent from the left margin).
-- **Only CRITICAL findings get an explicit `Fix:` line.** For HIGH and MEDIUM, bake the recommendation into the finding body — the example does not put `Fix:` on those.
-- Blank line between numbered findings.
-- DESIGN NOTES and WHAT'S WORKING bullets begin with two leading spaces, then `·`, then space, then text — `  · ...`. Multi-line bullets continue at 4-space indent.
-- Numbering continues across CRITICAL / HIGH / MEDIUM (1, 2, 3 → 4, 5, 6 → 7, 8…), like the example.
-
-If you find yourself writing `#`, `**`, or `-` anywhere in the report body, stop and reformat. The deliverable is monospaced plaintext that happens to live inside a fence.
-
-```
-SITE AUTOPSY: <domain>
-Niche: <inferred niche> · Audited <YYYY-MM-DD>
-
-VERDICT: <X.X> / 10 — <short tagline, 2-4 words>
-Estimated monthly leads lost to UX issues: ~<N>
-
-CRITICAL (fix this week)
-  1. <Specific finding citing a real number from evidence or a specific
-     visual observation from the screenshot. 2-4 lines of context
-     explaining why it matters in this niche.>
-     Fix: <actionable one-liner>
-
-  2. ...
-
-HIGH (fix this month)
-  4. <Finding with the fix baked into the body, no `Fix:` line.>
-
-  5. ...
-
-MEDIUM (fix this quarter)
-  7. <Finding with the fix baked into the body, no `Fix:` line.>
-
-DESIGN NOTES (niche: <niche>)
-  · <Niche-specific observation, can be multi-line. Reference the niche
-    profile's expectations vs what the screenshot shows.>
-  · <Another observation>
-
-WHAT'S WORKING
-  · <Genuine positive, multi-line OK. Skip the section entirely if there
-    is nothing real to put here — don't fabricate kindness.>
+```json
+{
+  "domain": "example.com",
+  "niche": "<inferred niche>",
+  "audited_at": "YYYY-MM-DD",
+  "verdict": {
+    "score": 7.1,
+    "tagline": "<2-5 word summary>"
+  },
+  "leads_lost_estimate": "~10",
+  "critical": [
+    { "finding": "<full finding text, plain prose, no manual line breaks>", "fix": "<actionable one-liner, no \"Fix:\" prefix>" }
+  ],
+  "high": [
+    { "finding": "<finding with the fix baked into the body>" }
+  ],
+  "medium": [
+    { "finding": "<finding with the fix baked into the body>" }
+  ],
+  "design_notes": [
+    "<niche-specific observation as a single string, plain prose>"
+  ],
+  "what_working": [
+    "<genuine positive, single string. Empty array if nothing real to say.>"
+  ]
+}
 ```
 
-## Scoring rules
+**Content rules (the format is taken care of, focus on these):**
+- `finding` and `fix` are plain prose. Do NOT insert `\n` line breaks — the renderer wraps for you.
+- `fix` is only used on CRITICAL items. HIGH and MEDIUM bake the fix into `finding`.
+- Score is a number with one decimal. Compute as: `(lighthouse_perf*0.2 + lighthouse_a11y*0.2 + lighthouse_seo*0.15 + lighthouse_bp*0.1 + design_score*0.35) / 10` where design_score is your 0-100 judgment from screenshots and niche profile.
+- `leads_lost_estimate` is `~<N>` style. Severe issues → 15-25, moderate → 5-15, minor → 1-5.
+- Don't pad CRITICAL. If only two issues are truly critical, ship two.
+- `what_working` should be empty array `[]` if there's genuinely nothing real to say. Do NOT fabricate kindness.
 
-- Verdict score is /10, one decimal. Compute as: `(lighthouse_perf*0.2 + lighthouse_a11y*0.2 + lighthouse_seo*0.15 + lighthouse_bp*0.1 + design_score*0.35) / 10`. The design score is your judgment 0-100 based on the screenshots and niche profile.
-- "Estimated monthly leads lost" is a rough finger-in-the-air number. If their conversion-blocking issues are severe (no mobile CTA, broken form, sub-30 perf), say 15-25. If moderate, say 5-15. If minor, say 1-5. Always prefix with `~` to signal estimate.
+## STEP 5 — render the report
+
+```bash
+node scripts/render.js ~/.local/share/site-autopsy/<domain>/findings.json
+```
+
+This emits the perfectly-formatted report to stdout, fence-wrapped and indent-perfect. **Paste the entire stdout into your response, exactly as printed, and nothing else.** No preamble, no outro, no "Here's the report:". The rendered output is the deliverable.
 
 ## Severity rules
 
@@ -142,18 +130,3 @@ Don't say "your hero CTA should be more prominent" — that's generic. Say "plum
 ## LAW: one report, no follow-up
 
 Produce the report. Stop. Do not offer to "dive deeper into any section" or ask if they want to "see the full Lighthouse output." The report IS the deliverable. If they want more, they'll ask.
-
-## STEP 5 — pre-flight checklist (do this before sending)
-
-Before you emit anything, check your draft:
-
-- [ ] First line is exactly three backticks. Last line is exactly three backticks.
-- [ ] Header is `SITE AUTOPSY: <domain>` — no leading `#`.
-- [ ] Each numbered finding starts with two spaces, then number, then dot, then space: `  1. `.
-- [ ] Continuation lines on numbered findings start at column 6 (5 leading spaces) so they align under the first letter of the finding.
-- [ ] Each `·` bullet starts with two spaces: `  · `.
-- [ ] No `**bold**`, no `# headings`, no `- bullets` anywhere inside the fence.
-- [ ] CRITICAL findings have a `Fix:` line; HIGH and MEDIUM do not.
-- [ ] Numbering is continuous across CRITICAL → HIGH → MEDIUM (e.g. 1,2,3 then 4,5,6 then 7,8).
-
-If any item fails, fix it before sending. The report is also the sales asset — formatting errors read as "the agency that wrote this isn't careful."
