@@ -25,6 +25,8 @@ If you do agency work, freelance web dev, or just want to know how badly your ow
 
 A single markdown report. Looks like this (real output, redacted client):
 
+![Example site-autopsy report](docs/images/example-report.png)
+
 ```
 SITE AUTOPSY: example-plumbing.com
 Niche: residential plumbing · Audited 2026-05-02
