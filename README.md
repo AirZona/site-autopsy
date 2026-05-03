@@ -55,6 +55,8 @@ DESIGN NOTES (niche: plumbing)
     feels more "established business," less "DIY blog."
 ```
 
+See the full report: [examples/example-plumbing-com.md](examples/example-plumbing-com.md).
+
 You can run it on a prospect's site, screenshot the report, and send it as a sales asset. That's the use case.
 
 ## Install
