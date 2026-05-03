@@ -18,10 +18,13 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-const url = process.argv[2];
+let url = process.argv[2];
 if (!url) {
   console.error('Usage: node audit.js <URL>');
   process.exit(1);
+}
+if (!/^https?:\/\//i.test(url)) {
+  url = 'https://' + url;
 }
 
 const domain = new URL(url).hostname.replace(/^www\./, '');
@@ -32,6 +35,7 @@ const evidence = {
   url,
   domain,
   audited_at: new Date().toISOString(),
+  ssl: null,
   lighthouse: null,
   lcp_element: null,
   cls_offenders: [],
@@ -43,6 +47,52 @@ const evidence = {
   links: { broken_count: 0, broken_samples: [], has_click_to_call: false, phone_numbers: [] },
   errors: [],
 };
+
+// SSL probe + http fallback. Broken SSL is a critical finding on its own (browser
+// warnings destroy trust, Google penalizes it, Chrome blocks form submissions). But
+// it would also stall the entire audit if we tried to run Lighthouse against an
+// unreachable https URL. So: probe https, and if it fails but http works, switch
+// the audit URL to http and record the SSL failure as evidence for the report.
+async function probeUrl(target) {
+  try {
+    const res = await fetch(target, {
+      method: 'HEAD',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(10000),
+    });
+    return { ok: true, status: res.status };
+  } catch (err) {
+    return { ok: false, error: err.message, code: err.cause?.code ?? null };
+  }
+}
+
+if (url.startsWith('https://')) {
+  const httpsResult = await probeUrl(url);
+  if (httpsResult.ok) {
+    evidence.ssl = { works: true };
+  } else {
+    const httpUrl = url.replace(/^https:\/\//, 'http://');
+    const httpResult = await probeUrl(httpUrl);
+    if (httpResult.ok) {
+      console.error(`SSL failed (${httpsResult.error}); falling back to ${httpUrl}`);
+      evidence.ssl = {
+        works: false,
+        error: httpsResult.error,
+        code: httpsResult.code,
+        fallback_url: httpUrl,
+      };
+      url = httpUrl;
+      evidence.url = httpUrl;
+    } else {
+      evidence.ssl = {
+        works: false,
+        error: httpsResult.error,
+        code: httpsResult.code,
+        http_also_failed: true,
+      };
+    }
+  }
+}
 
 // 1. Lighthouse
 try {

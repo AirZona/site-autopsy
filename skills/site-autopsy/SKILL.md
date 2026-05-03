@@ -31,6 +31,7 @@ If the script fails (network error, site blocks bots, etc.), report what failed 
 
 The evidence JSON contains:
 
+- `ssl`: `{ works: true }` if HTTPS loads with a valid cert, or `{ works: false, error, code, fallback_url? }` if it doesn't. **If `ssl.works === false`, this MUST be the #1 CRITICAL finding** — a broken cert means browsers show a "Not Secure" warning (or block the page entirely), Google penalizes ranking, and Chrome refuses to autofill forms. The audit will continue against the http fallback so you still get the rest of the data, but lead with the SSL fix.
 - `lighthouse`: scores for performance, accessibility, best-practices, SEO, plus `fcp`, `lcp`, `tti`, `cls`, `tbt`, `total_byte_weight_kb`
 - `lcp_element`: which DOM node was the LCP (selector + snippet) — usually the smoking gun for slow LCP
 - `cls_offenders`: top elements that caused layout shift, with score
