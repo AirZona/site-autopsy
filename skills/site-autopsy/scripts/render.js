@@ -13,6 +13,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 
 const WIDTH = 70;
 const NUM_PREFIX = '  ';      // before "1."
@@ -126,12 +127,23 @@ if (!findingsPath) {
 
 const findings = JSON.parse(await fs.readFile(findingsPath, 'utf8'));
 const report = renderReport(findings);
-const reportPath = path.join(path.dirname(findingsPath), 'report.md');
+
+// Default destination: ~/Downloads with a domain-tagged filename, so the report
+// is discoverable and self-identifying when forwarded as a sales asset. Fall back
+// to the findings.json directory if Downloads doesn't exist (rare on macOS/Windows,
+// possible on minimal Linux installs or non-English locales without xdg-user-dirs).
+const downloads = path.join(os.homedir(), 'Downloads');
+const filename = `site-autopsy-${findings.domain}.md`;
+let reportPath;
+try {
+  await fs.access(downloads);
+  reportPath = path.join(downloads, filename);
+} catch {
+  reportPath = path.join(path.dirname(findingsPath), filename);
+}
 await fs.writeFile(reportPath, report + '\n');
 
-// Print the report to stdout for piping / debugging, then announce the path on stderr.
-// The skill reads the path from stderr (or just constructs it) and uses report.md as
-// the canonical deliverable — pasting through the model's reply tends to lose the
-// fence and indentation.
+// Print the report to stdout for piping / debugging. Announce the path on stderr
+// so the skill can tell the user where to find the canonical, byte-perfect file.
 console.log(report);
 console.error(`\nReport written to: ${reportPath}`);

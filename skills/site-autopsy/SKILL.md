@@ -109,16 +109,16 @@ Write a file named `findings.json` next to the evidence — at `~/.local/share/s
 node scripts/render.js ~/.local/share/site-autopsy/<domain>/findings.json
 ```
 
-This writes the perfectly-formatted report to `~/.local/share/site-autopsy/<domain>/report.md` (and prints it to stdout for inspection). **The file is the deliverable, not your reply.** Do NOT paste the report into your response — pasting goes through markdown rendering and the model's own response generator, both of which strip the fence and flatten the numbered-list indentation. The file is byte-perfect; pasted output is not.
+This writes the perfectly-formatted report to `~/Downloads/site-autopsy-<domain>.md` (and prints it to stdout for inspection). The renderer announces the actual written path on stderr — read it from there. **The file is the deliverable, not your reply.** Do NOT paste the report into your response — pasting goes through markdown rendering and the model's own response generator, both of which strip the fence and flatten the numbered-list indentation. The file is byte-perfect; pasted output is not.
 
 Your final reply is exactly two lines, in this format:
 
 ```
-Report saved: <absolute path to report.md>
+Report saved: <absolute path printed by render.js on stderr>
 VERDICT: <X.X> / 10 — <tagline from findings.json>
 ```
 
-Nothing else. No preamble, no commentary, no "Let me know if…". The user opens `report.md` to read the report. That file is what they'll forward to a prospect or paste into a Google Doc.
+Nothing else. No preamble, no commentary, no "Let me know if…". The user opens the file in Downloads to read the report. That file is what they'll forward to a prospect or paste into a Google Doc.
 
 ## Severity rules
 
