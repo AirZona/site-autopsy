@@ -12,6 +12,7 @@
  */
 
 import fs from 'fs/promises';
+import path from 'path';
 
 const WIDTH = 70;
 const NUM_PREFIX = '  ';      // before "1."
@@ -124,4 +125,13 @@ if (!findingsPath) {
 }
 
 const findings = JSON.parse(await fs.readFile(findingsPath, 'utf8'));
-console.log(renderReport(findings));
+const report = renderReport(findings);
+const reportPath = path.join(path.dirname(findingsPath), 'report.md');
+await fs.writeFile(reportPath, report + '\n');
+
+// Print the report to stdout for piping / debugging, then announce the path on stderr.
+// The skill reads the path from stderr (or just constructs it) and uses report.md as
+// the canonical deliverable — pasting through the model's reply tends to lose the
+// fence and indentation.
+console.log(report);
+console.error(`\nReport written to: ${reportPath}`);
