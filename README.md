@@ -2,6 +2,8 @@
 
 > Point it at any small business website. Get back the brutal, specific, prioritized fix list a $500/hr agency would charge you for. Free. In about 60 seconds.
 
+![site-autopsy demo](assets/demo.gif)
+
 ```
 /plugin marketplace add AirZona/site-autopsy
 /plugin install site-autopsy@site-autopsy
