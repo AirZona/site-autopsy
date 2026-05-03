@@ -1,0 +1,22 @@
+{
+  "name": "site-autopsy",
+  "version": "0.1.0",
+  "description": "Brutal AI website audit. Lighthouse + axe + niche-aware design critique. One markdown report you can send to a prospect.",
+  "author": {
+    "name": "AgileRocket",
+    "url": "https://agilerocket.com"
+  },
+  "homepage": "https://github.com/AirZona/site-autopsy",
+  "repository": "https://github.com/AirZona/site-autopsy",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "claude-skill",
+    "website-audit",
+    "lighthouse",
+    "accessibility",
+    "agency",
+    "freelance",
+    "web-design"
+  ]
+}

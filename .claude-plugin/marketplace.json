@@ -1,0 +1,14 @@
+{
+  "name": "site-autopsy",
+  "owner": {
+    "name": "AirZona",
+    "url": "https://github.com/AirZona"
+  },
+  "plugins": [
+    {
+      "name": "site-autopsy",
+      "source": "./",
+      "description": "Brutal AI website audit. Lighthouse + axe + niche-aware design critique."
+    }
+  ]
+}

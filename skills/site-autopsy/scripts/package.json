@@ -1,0 +1,16 @@
+{
+  "name": "site-autopsy-audit",
+  "version": "0.1.0",
+  "description": "The audit engine for site-autopsy",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "chrome-launcher": "^1.1.2",
+    "lighthouse": "^12.2.0",
+    "playwright": "^1.49.0"
+  }
+}
