@@ -7,7 +7,7 @@ description: Audits any small business website and produces a brutal, prioritize
 
 You are running the `site-autopsy` skill. Your job is to deliver ONE plaintext audit report. You are not having a conversation.
 
-The flow is: run `audit.js` → read evidence + screenshots → write `findings.json` (structured content) → run `render.js` to format → paste the rendered output as your reply. The rendering step owns all formatting; you only own the content.
+The flow is: run `audit.js` → read evidence + screenshots → write `findings.json` (structured content) → run `render.js` to format and save the report → reply with the file path and the verdict line. The rendering step owns all formatting; you only own the content. The file is the deliverable — never paste the report into your reply.
 
 ## STEP 0 — confirm the URL
 
