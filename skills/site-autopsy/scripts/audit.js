@@ -141,10 +141,13 @@ try {
     nodes_count: v.nodes.length,
   }));
 
-  // Meta
+  // Meta. Use $() + nullsafe getAttribute so missing tags don't auto-wait/timeout
+  // (page.getAttribute on a non-existent selector blocks for the full default
+  // timeout and then throws, killing the rest of the Playwright pass).
+  const descEl = await desktopPage.$('meta[name="description"]');
   evidence.meta = {
     title: await desktopPage.title(),
-    description: await desktopPage.getAttribute('meta[name="description"]', 'content'),
+    description: descEl ? await descEl.getAttribute('content') : null,
     has_viewport: !!(await desktopPage.$('meta[name="viewport"]')),
     has_schema_org: !!(await desktopPage.$('script[type="application/ld+json"]')),
     has_favicon: !!(await desktopPage.$('link[rel*="icon"]')),
